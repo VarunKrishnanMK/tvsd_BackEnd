@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "generated/prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DB_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  nickName  String
+  email     String   @unique
+  password  String
+  mobile    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bankAccounts        BankAccountDetails[]
+  beneficiaryAccounts BeneficiaryAccountDetails[]
+  invoices            Invoice[]
+
+  @@index([mobile, email])
+}
+
+model BankAccountDetails {
+  id                    Int      @id @default(autoincrement())
+  userId                Int
+  accountHolderName     String
+  accountHolderNickName String
+  accountNumber         String   @unique
+  accountType           String   @default("SAVINGS")
+  bankName              String
+  balance               Decimal  @default("0.00") @db.Decimal(10, 2)
+  branch                String
+  ifscCode              String
+  pincode               String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id])
+  invoicesFrom Invoice[] @relation("FromBankAccount")
+
+  @@index([accountNumber])
+}
+
+model BeneficiaryAccountDetails {
+  id                    Int      @id @default(autoincrement())
+  userId                Int
+  accountHolderName     String
+  accountHolderNickName String
+  accountNumber         String   @unique
+  accountType           String   @default("SAVINGS")
+  bankName              String
+  branch                String
+  ifscCode              String
+  pincode               String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user       User      @relation(fields: [userId], references: [id])
+  invoicesTo Invoice[] @relation("ToBeneficiaryAccount")
+
+  @@index([accountNumber])
+}
+
+model Invoice {
+  id                     Int      @id @default(autoincrement())
+  userId                 Int
+  invoiceTitle           String
+  amount                 Decimal  @db.Decimal(10, 2)
+  description            String?
+  payeeEmail             String
+  payeeContact           String
+  paymentDate            DateTime
+  status                 String   @default("pending")
+  fromBankAccountId      Int
+  toBeneficiaryAccountId Int
+  transactionDate        DateTime @default(now())
+
+  user                 User                      @relation(fields: [userId], references: [id])
+  fromBankAccount      BankAccountDetails        @relation("FromBankAccount", fields: [fromBankAccountId], references: [id])
+  toBeneficiaryAccount BeneficiaryAccountDetails @relation("ToBeneficiaryAccount", fields: [toBeneficiaryAccountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([payeeEmail, payeeContact])
+}
