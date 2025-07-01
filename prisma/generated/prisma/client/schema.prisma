@@ -82,7 +82,7 @@ model Invoice {
   payeeEmail             String
   payeeContact           String
   paymentDate            DateTime
-  status                 String   @default("pending")
+  status                 String   @default("PENDING")
   fromBankAccountId      Int
   toBeneficiaryAccountId Int
   transactionDate        DateTime @default(now())

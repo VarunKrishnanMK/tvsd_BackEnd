@@ -22,20 +22,19 @@ export async function getInvoiceDetailsById(req) {
     }
     const existingAccount = await prisma.invoice.findUnique({ where: { id: Number(payload.id) } });
     if (!existingAccount) {
-        const error = new Error("No invoice created for this id");
-        error.statusCode = 409;
-        throw error;
+        return "No invoice created for this id";
     }
     return existingAccount;
 }
 
 export async function getListInvoices(req) {
     const userId = req.user;
-    const accounts = await prisma.invoice.findMany({ where: { userId: Number(userId) } });
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = parseInt(req.body.pageSize) || 10;
+    const skipAmount = (page - 1) * pageSize;
+    const accounts = await prisma.invoice.findMany({ where: { userId: parseInt(userId) }, take: pageSize, skip: skipAmount });
     if (accounts.length === 0) {
-        const error = new Error("No beneficiary bank accounts found for this user");
-        error.statusCode = 409;
-        throw error;
+        return "No beneficiary bank accounts found for this user";
     }
     return accounts;
 }
@@ -49,11 +48,9 @@ export async function updateInvoiceById(req) {
         error.statusCode = 400;
         throw error;
     }
-    const accounts = await prisma.invoice.update({ where: { userId: Number(UId), id: Number(id) }, data: updatedData });
+    const accounts = await prisma.invoice.update({ where: { userId: Number(UId), id: parseInt(id) }, data: updatedData });
     if (!accounts) {
-        const error = new Error("No bank accounts found for this user");
-        error.statusCode = 409;
-        throw error;
+        return "No bank accounts found for this user";
     }
     return accounts;
 }
@@ -66,6 +63,6 @@ export async function deleteInvoiceById(req) {
         error.statusCode = 400;
         throw error;
     }
-    await prisma.invoice.delete({ where: { userId: Number(userId), id: Number(payload.id) } });
+    await prisma.invoice.delete({ where: { userId: parseInt(userId), id: Number(payload.id) } });
     return "Account deleted successfully";
 }

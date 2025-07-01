@@ -22,20 +22,19 @@ export async function getBankAccountDetailsById(req) {
     }
     const existingAccount = await prisma.bankAccountDetails.findUnique({ where: { id: Number(payload.id) } });
     if (!existingAccount) {
-        const error = new Error("Bank account details does not exists");
-        error.statusCode = 409;
-        throw error;
+        return "No bank accounts found for this user";
     }
     return existingAccount;
 }
 
 export async function getListBankAccountDetails(req) {
     const userId = req.user;
-    const accounts = await prisma.bankAccountDetails.findMany({ where: { userId: Number(userId) } });
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = parseInt(req.body.pageSize) || 10;
+    const skipAmount = (page - 1) * pageSize;
+    const accounts = await prisma.bankAccountDetails.findMany({ where: { userId: parseInt(userId) }, take: pageSize, skip: skipAmount });
     if (accounts.length === 0) {
-        const error = new Error("No bank accounts found for this user");
-        error.statusCode = 409;
-        throw error;
+        return "No bank accounts found for this user";
     }
     return accounts;
 }
@@ -49,11 +48,9 @@ export async function updateBankAccountDetailsById(req) {
         error.statusCode = 400;
         throw error;
     }
-    const accounts = await prisma.bankAccountDetails.update({ where: { userId: Number(UId), id: Number(id) }, data: updatedData });
+    const accounts = await prisma.bankAccountDetails.update({ where: { userId: Number(UId), id: parseInt(id) }, data: updatedData });
     if (!accounts) {
-        const error = new Error("No bank accounts found for this user");
-        error.statusCode = 409;
-        throw error;
+        return "No bank accounts found for this user";
     }
     return accounts;
 }
@@ -66,6 +63,6 @@ export async function deleteBankAccountDetailsById(req) {
         error.statusCode = 400;
         throw error;
     }
-    await prisma.bankAccountDetails.delete({ where: { userId: Number(userId), id: Number(payload.id) } });
+    await prisma.bankAccountDetails.delete({ where: { userId: parseInt(userId), id: Number(payload.id) } });
     return "Account deleted successfully";
 }

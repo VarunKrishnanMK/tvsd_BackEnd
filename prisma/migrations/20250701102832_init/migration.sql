@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `invoice` MODIFY `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING';
